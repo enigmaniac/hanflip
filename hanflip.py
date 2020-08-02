@@ -3,6 +3,7 @@
 
 from micropython import const
 import framebuf
+import ubinascii
 
 # Subclassing FrameBuffer provides support for graphics primitives
 # http://docs.micropython.org/en/latest/pyboard/library/framebuf.html
@@ -17,52 +18,57 @@ CMD_IMG = const(0x31)
 CMD_ECHO = const(0x32)
 CMD_ASCII = const(0x36)
 
+def hexme(ba):
+	return "".join("%02x " % i for i in ba)
 
-class hanflip(framebuf.FrameBuffer):
-    def __init__(self, width, height, id, serial): 
-        self.width = width
-        self.height = height
-        self.id = id #physical ID of the sign
+class flip(framebuf.FrameBuffer):
+	def __init__(self, width, height, id, serial): 
+		self.width = width
+		self.lame = 0
+		self.height = height
+		self.id = id #physical ID of the sign
 		self.serial = serial #Serial object to write data to, eg UART
-        self.pages = (self.height // 8) + 1
-        self.buffer = bytearray(self.pages * self.width)
-        super().__init__(self.buffer, self.width, self.height, framebuf.MONO_VLSB)
-        self.init_display()
+		self.pages = (self.height // 8) + 1
+		self.buffer = bytearray(self.pages * self.width)
+		super().__init__(self.buffer, self.width, self.height, framebuf.MONO_VLSB)
+		self.init_display()
 
-    def init_display(self):
-        self.show()
+	def init_display(self):
+		print("display initialized")
 
-    def clear(self):
-        self.write_cmd(CMD_CLEAR)
+	def clear(self):
+		self.write_cmd(CMD_CLEAR)
 
-    def test(self):
-        self.write_cmd(CMD_TEST)
+	def test(self):
+		self.write_cmd(CMD_TEST)
 		
-    def echo(self):
-        self.write_cmd(CMD_ECHO)
+	def echo(self):
+		self.write_cmd(CMD_ECHO)
 
-    def show(self):
-        self.write_data(self.buffer)
+	def show(self):
+		self.write_data(self.buffer)
 		
-	def write_cmd(self, cmd)
+	def write_cmd(self, cmd):
 		check = self.checksum(cmd)
-		req = bytearray.fromhex("02 3" + self.id) #Initial string is ASCII 02 [STX] + Code of ID, shortcut using 30 + id as hex text
+		req = bytearray(b'\x02')
 		req.append(cmd)
+		req.extend(str(self.id))
 		req.append(0x03)
-		req.append(self._checksum(cmd)
-		print(req.hex(" ")
-		serial.write(req)
+		req.extend(self.checksum(cmd))
+		print(hexme(req))
+		#serial.write(req)
 		
-	def write_data(self, buf)
+	def write_data(self, buf):
 		print("To implement")
 	
 	# Write a preformatted string, resetting ID if needed
-	def write_preform(self, hex)
+	def write_preform(self, hex):
 		print("To implement")
 		
-	def _checksum(self, cmd, payload=[0])
-		checksum = 255 - ((2 + self.id.ord() + cmd + payload.sum())%256)
-		print(checksum)
-		return checksum
+	def checksum(self, cmd):
+		payload= bytearray()
+		check = 255 - ((2 + ord(str(self.id)) + cmd + sum(payload))%256)
+		print("%0.2X" % check) #Checksum is actually passed as the ascii characters of the hex checksum. So we take the checksum, and convert to hex characters
+		return "%0.2X" % check
 
 
