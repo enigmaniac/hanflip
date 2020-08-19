@@ -1,5 +1,6 @@
 
 # MicroPython Hanover Flipdot driver over RS485
+# Uses Framebuffer library
 
 from micropython import const
 import framebuf
@@ -27,7 +28,6 @@ def hexme(ba, delim = " "):
 class flip(framebuf.FrameBuffer):
 	def __init__(self, width, height, id, serial): 
 		self.width = width
-		self.lame = 0
 		self.height = height
 		self.id = id #physical ID of the sign
 		self.debug = False
@@ -37,6 +37,7 @@ class flip(framebuf.FrameBuffer):
 		super().__init__(self.buffer, self.width, self.height, framebuf.MONO_VLSB)
 		self.init_display()
 
+	#Not required, but added for compatability purposes
 	def init_display(self):
 		print("display initialized")
 	
@@ -80,7 +81,6 @@ class flip(framebuf.FrameBuffer):
 		payload = bytearray("%0.2X" % (self.width * self.height // 8)) + payload #prepend size of display, formatted to hex
 		if(self.debug): print(payload)
 		self.write_cmd(CMD_IMG, payload)
-		print("Screen refreshing")
 		
 	
 	# Write a preformatted string, resetting ID if needed
