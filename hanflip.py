@@ -30,7 +30,7 @@ class flip(framebuf.FrameBuffer):
 		self.width = width
 		self.height = height
 		self.id = id #physical ID of the sign
-		self.debug = False
+		self._debug = False
 		self.serial = serial #Serial object to write data to, eg UART
 		self.pages = (self.height // 8)
 		self.buffer = bytearray(self.pages * self.width)
@@ -41,8 +41,13 @@ class flip(framebuf.FrameBuffer):
 	def init_display(self):
 		print("display initialized")
 	
+	@property
 	def debug(self):
-		self.debug = True
+		return self._debug
+
+	@debug.setter
+	def debug(self, value):
+		self._debug = bool(value)
 
 	def clear(self):
 		self.fill(0)
@@ -59,7 +64,7 @@ class flip(framebuf.FrameBuffer):
 		
 	def showtext(self, text):
 		#Not working (?)
-		self.write_cmd(CMD_ASCII, bytearray(text))
+		self.write_cmd(CMD_ASCII, bytearray(text, "ascii"))
 		
 	def write_cmd(self, cmd, payload = bytearray()):
 		check = self.checksum(cmd, payload)
@@ -69,17 +74,17 @@ class flip(framebuf.FrameBuffer):
 		req.extend(payload)
 		req.append(0x03) #Closure
 		req.extend(check) #Checksum
-		if(self.debug): print(hexme(req))
+		if(self._debug): print(hexme(req))
 		self.serial.write(req)
 		
 	def write_data(self, payload):
-		if(self.debug): print(payload)		
+		if(self._debug): print(payload)		
 		#Split and recombine , since framebuf writes the full width of 8 vertical pixels, followed by next row of 8 vertical pixels. Hanflip expects 2 bytes of vertical pixels
 		payload = bytearray(a for b in zip(payload[0:len(payload)//2], payload[-len(payload)//2:len(payload)]) for a in b)
 		#                              interweave    1st row of 8 px    2nd row of 8 px                        flatten
-		payload = bytearray(hexme(payload, "")) #Convert bytes to ASCII hex representation (hanflip uses ASCII chars for hex)
-		payload = bytearray("%0.2X" % (self.width * self.height // 8)) + payload #prepend size of display, formatted to hex
-		if(self.debug): print(payload)
+		payload = bytearray(hexme(payload, ""), "ascii") #Convert bytes to ASCII hex representation (hanflip uses ASCII chars for hex)
+		payload = bytearray("%0.2X" % (self.width * self.height // 8), "ascii") + payload #prepend size of display, formatted to hex
+		if(self._debug): print(payload)
 		self.write_cmd(CMD_IMG, payload)
 		
 	
@@ -88,9 +93,9 @@ class flip(framebuf.FrameBuffer):
 		print("To implement")
 		
 	def checksum(self, cmd, payload=bytearray()):
-		if(self.debug): print(payload)
+		if(self._debug): print(payload)
 		check = 255 - ((2 + ord(str(self.id)) + cmd + sum(payload))%256)
-		if(self.debug): print("%0.2X" % check) #Checksum is actually passed as the ascii characters of the hex checksum. So we take the checksum, and convert to hex characters
+		if(self._debug): print("%0.2X" % check) #Checksum is actually passed as the ascii characters of the hex checksum. So we take the checksum, and convert to hex characters
 		return "%0.2X" % check
 
 
