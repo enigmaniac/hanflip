@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hanflip"
+version = "0.1.0"
+description = "MicroPython driver for Hanover Displays flip-dot signs over RS485"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+authors = [
+    { name = "enigmaniac" }
+]
+keywords = ["micropython", "flipdot", "hanover", "rs485", "esp32", "display"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: Implementation :: MicroPython",
+    "Topic :: System :: Hardware :: Hardware Drivers"
+]
+py-modules = ["hanflip"]
